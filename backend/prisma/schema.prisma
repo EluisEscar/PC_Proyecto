@@ -1,0 +1,67 @@
+// Modelo de datos — Caso 3 (limpieza de parabrisas)
+// Justificación relacional: el dominio tiene entidades con relaciones claras
+// (un usuario administra; un trabajador recibe muchas propinas) e integridad
+// transaccional en los pagos -> PostgreSQL (relacional) es la elección correcta.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+/// Usuario del panel de gestión (ONG / municipalidad que administra el padrón).
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workers   Worker[] // trabajadores registrados por este usuario
+}
+
+/// Trabajador de limpieza de parabrisas (la persona en el cruce).
+model Worker {
+  id          String   @id @default(uuid())
+  fullName    String
+  description String?  // breve presentación / situación
+  photoUrl    String?  // imagen de perfil (almacenada en S3)
+  crossing    String   // nombre del cruce / esquina donde trabaja
+  latitude    Float?
+  longitude   Float?
+  phone       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  registeredBy   User?   @relation(fields: [registeredById], references: [id], onDelete: SetNull)
+  registeredById String?
+
+  tips        Tip[]
+
+  @@index([crossing])
+}
+
+/// Propina digital recibida por un trabajador (simulada en el MVP).
+model Tip {
+  id        String   @id @default(uuid())
+  amount    Decimal  @db.Decimal(10, 2)
+  message   String?
+  donorName String?  // opcional: quién deja la propina
+  createdAt DateTime @default(now())
+
+  worker    Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  workerId  String
+
+  @@index([workerId])
+}

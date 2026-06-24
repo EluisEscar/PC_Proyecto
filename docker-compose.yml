@@ -1,0 +1,31 @@
+# Entorno de desarrollo local: PostgreSQL + API.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: limpiaparabrisas-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: limpiaparabrisas
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: ./backend
+    container_name: limpiaparabrisas-api
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/limpiaparabrisas?schema=public
+      JWT_SECRET: dev-secret-change-me
+      PORT: 3001
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - '3001:3001'
+
+volumes:
+  pgdata:
