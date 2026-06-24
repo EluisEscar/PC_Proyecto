@@ -1,6 +1,9 @@
 # ---- Build ----
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
+
+# OpenSSL y certificados: Prisma los necesita para sus motores.
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 RUN npm ci
@@ -12,9 +15,12 @@ COPY . .
 RUN npm run build
 
 # ---- Runtime ----
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+
+# OpenSSL y certificados también en runtime (motor de consultas y migraciones).
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 RUN npm ci --omit=dev
@@ -24,5 +30,5 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 3001
-# Aplica migraciones y arranca (en ECS Fargate).
+# Aplica migraciones y arranca (en Render).
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
