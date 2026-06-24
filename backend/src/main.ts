@@ -5,9 +5,28 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // CORS: permite que el front (Vercel) consuma la API.
+  // CORS: permite que el frontend consuma la API.
+  // Acepta: orígenes configurados en CORS_ORIGIN, localhost (desarrollo)
+  // y cualquier despliegue de Vercel (*.vercel.app), cuyas URLs cambian por deploy.
+  const allowed =
+    process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()) ?? [];
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') ?? '*',
+    origin: (origin, callback) => {
+      // Peticiones sin origen (curl, server-to-server, health checks).
+      if (!origin) return callback(null, true);
+      let host = '';
+      try {
+        host = new URL(origin).hostname;
+      } catch {
+        return callback(null, false);
+      }
+      const ok =
+        allowed.includes(origin) ||
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        host.endsWith('.vercel.app');
+      return callback(null, ok);
+    },
   });
 
   // Validación global de DTOs.
