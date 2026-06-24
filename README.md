@@ -41,4 +41,14 @@ npm run start:dev
 ## Estrategia de branching
 
 `main` (producción) ← `develop` (integración) ← `feature/*` (cada historia de usuario),
-con Pull Requests revisados antes de integrar.
+con Pull Requests revisados antes de integrar. Detalle en
+[`docs/branching.md`](docs/branching.md).
+
+## CI/CD
+
+Pipeline en GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
+
+1. **Backend** — `npm ci` → `prisma generate` → build → pruebas (Jest).
+2. **Frontend** — `npm ci` → build de Next.js.
+3. **Deploy** — al integrar a `main`, dispara el despliegue en Render y Vercel
+   (vía deploy hooks configurados como *secrets*, o despliegue nativo desde GitHub).

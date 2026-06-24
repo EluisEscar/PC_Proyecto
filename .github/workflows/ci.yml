@@ -1,0 +1,88 @@
+name: CI/CD
+
+# Pipeline: build + test en cada push/PR; deploy automático al hacer merge a main.
+on:
+  push:
+    branches: ['main', 'develop', 'feature/**', 'claude/**']
+  pull_request:
+    branches: ['main', 'develop']
+
+jobs:
+  # ---- Build + test del backend (NestJS + Prisma) ----
+  backend:
+    name: Backend · build & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar cliente Prisma
+        run: npx prisma generate
+
+      - name: Compilar
+        run: npm run build
+
+      - name: Pruebas unitarias
+        run: npm test
+
+  # ---- Build del frontend (Next.js) ----
+  frontend:
+    name: Frontend · build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+  # ---- Deploy: solo cuando se integra a main y los jobs anteriores pasan ----
+  deploy:
+    name: Deploy (Render + Vercel)
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Desplegar backend en Render
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -fsS "$HOOK" && echo "Deploy de Render disparado."
+          else
+            echo "RENDER_DEPLOY_HOOK_URL no configurado; se omite (Render auto-despliega desde GitHub)."
+          fi
+
+      - name: Desplegar frontend en Vercel
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -fsS -X POST "$HOOK" && echo "Deploy de Vercel disparado."
+          else
+            echo "VERCEL_DEPLOY_HOOK_URL no configurado; se omite (Vercel auto-despliega desde GitHub)."
+          fi

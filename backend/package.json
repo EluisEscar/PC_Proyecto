@@ -14,6 +14,15 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "test": "jest"
   },
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "testEnvironment": "node"
+  },
   "dependencies": {
     "@nestjs/common": "^10.4.0",
     "@nestjs/config": "^3.2.0",
