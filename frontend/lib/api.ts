@@ -3,6 +3,8 @@
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
+export type WorkerStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
 export interface Worker {
   id: string;
   fullName: string;
@@ -13,6 +15,7 @@ export interface Worker {
   longitude?: number | null;
   phone?: string | null;
   active: boolean;
+  status: WorkerStatus;
   createdAt: string;
 }
 
@@ -67,12 +70,30 @@ export const api = {
 
   listWorkers: () => request<Worker[]>('/workers'),
 
+  // Auto-registro público del trabajador (queda PENDING).
+  registerWorker: (data: Partial<Worker>) =>
+    request<Worker>('/workers/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   getWorker: (id: string) => request<WorkerDetail>(`/workers/${id}`),
 
   createWorker: (data: Partial<Worker>) =>
     request<Worker>('/workers', {
       method: 'POST',
       body: JSON.stringify(data),
+    }),
+
+  // Listado para el panel admin (opcionalmente filtrado por estado).
+  listWorkersAdmin: (status?: WorkerStatus) =>
+    request<Worker[]>(`/workers/admin/all${status ? `?status=${status}` : ''}`),
+
+  // Aprobar o rechazar un trabajador auto-registrado.
+  setWorkerStatus: (id: string, status: WorkerStatus) =>
+    request<Worker>(`/workers/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
     }),
 
   deleteWorker: (id: string) =>

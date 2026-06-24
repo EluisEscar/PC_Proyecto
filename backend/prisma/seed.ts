@@ -47,7 +47,7 @@ async function main() {
 
   for (const w of workers) {
     const created = await prisma.worker.create({
-      data: { ...w, registeredById: admin.id },
+      data: { ...w, registeredById: admin.id, status: 'APPROVED' },
     });
     // Algunas propinas de ejemplo.
     await prisma.tip.createMany({

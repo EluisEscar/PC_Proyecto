@@ -17,6 +17,13 @@ enum Role {
   STAFF
 }
 
+/// Estado de moderación de un trabajador auto-registrado.
+enum WorkerStatus {
+  PENDING // se auto-registró, espera verificación del admin
+  APPROVED // verificado y visible al público
+  REJECTED // rechazado por el admin
+}
+
 /// Usuario del panel de gestión (ONG / municipalidad que administra el padrón).
 model User {
   id        String   @id @default(uuid())
@@ -40,10 +47,12 @@ model Worker {
   latitude    Float?
   longitude   Float?
   phone       String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  active      Boolean      @default(true)
+  status      WorkerStatus @default(PENDING) // flujo de auto-registro + aprobación
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
+  // Si lo registró un admin, queda el vínculo; si fue auto-registro, es null.
   registeredBy   User?   @relation(fields: [registeredById], references: [id], onDelete: SetNull)
   registeredById String?
 

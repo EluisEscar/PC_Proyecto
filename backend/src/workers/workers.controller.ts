@@ -6,11 +6,18 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { WorkerStatus } from '@prisma/client';
 import { WorkersService } from './workers.service';
-import { CreateWorkerDto, UpdateWorkerDto } from './dto/worker.dto';
+import {
+  CreateWorkerDto,
+  RegisterWorkerDto,
+  UpdateStatusDto,
+  UpdateWorkerDto,
+} from './dto/worker.dto';
 import { CreateTipDto } from './dto/tip.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -23,6 +30,12 @@ export class WorkersController {
   @Get()
   findAll() {
     return this.workers.findAll();
+  }
+
+  /// Auto-registro público del trabajador (queda en estado PENDING).
+  @Post('register')
+  register(@Body() dto: RegisterWorkerDto) {
+    return this.workers.register(dto);
   }
 
   @Get(':id')
@@ -38,10 +51,24 @@ export class WorkersController {
 
   // ---- Endpoints protegidos (panel de gestión) ----
 
+  /// Listado para el panel; ?status=PENDING para ver los que esperan aprobación.
+  @UseGuards(JwtAuthGuard)
+  @Get('admin/all')
+  findAllForAdmin(@Query('status') status?: WorkerStatus) {
+    return this.workers.findAllForAdmin(status);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() dto: CreateWorkerDto, @Req() req: any) {
     return this.workers.create(dto, req.user.id);
+  }
+
+  /// Aprobar o rechazar un trabajador auto-registrado.
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/status')
+  setStatus(@Param('id') id: string, @Body() dto: UpdateStatusDto) {
+    return this.workers.setStatus(id, dto.status);
   }
 
   @UseGuards(JwtAuthGuard)

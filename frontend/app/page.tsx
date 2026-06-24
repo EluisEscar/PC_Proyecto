@@ -18,7 +18,12 @@ export default async function HomePage() {
 
   return (
     <>
-      <h1>Personas que limpian parabrisas</h1>
+      <div className="spread">
+        <h1>Personas que limpian parabrisas</h1>
+        <Link href="/registro" className="btn">
+          Soy trabajador · Registrarme
+        </Link>
+      </div>
       <p className="lead">
         Cada persona en esta lista trabaja en un cruce de la ciudad. Conoce su
         historia y déjale una propina digital escaneando su código QR.
