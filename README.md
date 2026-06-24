@@ -8,11 +8,10 @@ geolocalización del cruce y **propina digital** mediante QR.
 
 | Capa | Tecnología | Despliegue |
 |------|-----------|-----------|
-| Frontend | Next.js + TypeScript | Vercel |
-| Backend / API | NestJS + TypeScript | AWS ECS Fargate (Docker) |
-| Base de datos | PostgreSQL (Prisma ORM) | AWS RDS |
-| Almacenamiento | Imágenes de perfil | AWS S3 |
-| Red / Balanceo | VPC + ALB + CloudFront | AWS |
+| Frontend | Next.js + TypeScript | Vercel (Edge/CDN) |
+| Backend / API | NestJS + TypeScript (Docker) | Render Web Service |
+| Base de datos | PostgreSQL (Prisma ORM) | Render PostgreSQL (gestionada) |
+| Infra como código | Blueprint | `render.yaml` |
 | CI/CD | GitHub Actions | — |
 | Gestión Scrum | Jira | — |
 
